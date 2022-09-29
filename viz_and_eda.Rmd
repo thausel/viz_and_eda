@@ -1,21 +1,143 @@
 ---
-title: "Simple document"
-output: html_document
+title: "viz_part_1"
+author: "Tim Hauser"
+output: github_document
 ---
 
-I'm an R Markdown document! 
-
-# Section 1
-
-Here's a **code chunk** that samples from 
-a _normal distribution_:
+## Import data
 
 ```{r}
-samp = rnorm(100)
-length(samp)
+library(tidyverse)
+library(ggridges)
 ```
 
-# Section 2
+Copy in this code from course website:
 
-I can take the mean of the sample, too!
-The mean is `r mean(samp)`.
+```{r}
+weather_df = 
+  rnoaa::meteo_pull_monitors(
+    c("USW00094728", "USC00519397", "USS0023B17S"),
+    var = c("PRCP", "TMIN", "TMAX"), 
+    date_min = "2017-01-01",
+    date_max = "2017-12-31") %>%
+  mutate(
+    name = recode(
+      id, 
+      USW00094728 = "CentralPark_NY", 
+      USC00519397 = "Waikiki_HA",
+      USS0023B17S = "Waterhole_WA"),
+    tmin = tmin / 10,
+    tmax = tmax / 10) %>%
+  select(name, id, everything())
+```
+
+Let's make a scatterplot
+
+```{r}
+ggplot(weather_df, aes(x = tmin, y = tmax)) + geom_point()
+```
+
+Let's make the a similar  scatterplot, but differently using piping (also added a filter below)
+
+```{r}
+weather_df %>%
+  drop_na() %>% 
+  filter(name == "CentralPark_NY") %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point()
+```
+
+Let's keep making the same plot but different
+
+```{r}
+weather_scatterplot =
+  weather_df %>% 
+  drop_na() %>% 
+  ggplot(aes(x = tmin, y = tmax))
+
+weather_scatterplot + geom_point()
+```
+
+## Let's fancy this up a bit
+
+Adding color + legend, a smooth curve
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax)) + 
+  geom_point(aes(color = name)) +
+  geom_smooth()
+# here geom_smooth applies to whole
+```
+
+Same as above but this time smooth curve applied to each color, then made points transparent and took out SE of smooth curve
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = 0.3) +
+  geom_smooth(se = FALSE)
+# here geom_smooth applies to each color
+```
+
+Make separate panels separated by whatever variable we are interested in
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmin, y = tmax, color = name)) + 
+  geom_point(alpha = 0.3) +
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ name)
+# row against columns instead add: facet_grid(. ~ name)
+```
+
+`tmax` vs. `tmin` is boring, let's spice it up some
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name)) + 
+  geom_point(aes(size = prcp), alpha = .3) +
+  geom_smooth(se = FALSE) + 
+  facet_grid(. ~ name)
+# made size of dots according to prcp, i.e., added another layer of information
+```
+
+## Learning Assignment 1
+
+```{r}
+weather_df %>% 
+  filter(name == "CentralPark_NY") %>% 
+  mutate(
+    tmax_fahr = tmax * (9 / 5) + 32,
+    tmin_fahr = tmin * (9 / 5) + 32) %>% 
+  ggplot(aes(x = tmin_fahr, y = tmax_fahr)) +
+  geom_point(alpha = .5) + 
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+## Unvariate plots...
+
+Histograms, barplots, boxplots, violins, ...
+
+Histogram:
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmax, fill=name)) + 
+  geom_histogram() +
+  facet_grid(. ~ name)
+# fill= works better with histograms instead of color=
+# often it makes sense to put historams in different panels
+```
+
+Density plot:
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmax, fill=name)) + 
+  geom_density(alpha=0.3)
+```
+
+
+
+

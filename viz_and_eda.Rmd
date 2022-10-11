@@ -115,6 +115,15 @@ weather_df %>%
   geom_smooth(method = "lm", se = FALSE)
 ```
 
+## Odds and ends
+
+```{r}
+ggplot(weather_df, aes(x = tmax, y = tmin)) + 
+  geom_hex()
+# When you’re making a scatterplot with lots of data, there’s a limit to how much you can avoid overplotting using alpha levels and transparency. In these cases geom_hex(), geom_bin2d(), or geom_density2d() can be handy
+```
+
+
 ## Unvariate plots...
 
 Histograms, barplots, boxplots, violins, ...
@@ -138,6 +147,51 @@ weather_df %>%
   geom_density(alpha=0.3)
 ```
 
+Boxplots:
 
+```{r}
+weather_df %>% 
+  ggplot(aes(x = name, y = tmax, fill=name)) + 
+  geom_boxplot()
+```
+
+Violin plots:
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = name, y = tmax, fill=name)) + 
+  geom_violin()
+```
+
+Ridgeplots:
+
+```{r}
+weather_df %>% 
+  ggplot(aes(x = tmax, y = name, fill=name)) + 
+  geom_density_ridges()
+```
+
+## saving and embedding plots
+
+```{r}
+weather_scatterplot =
+  weather_df %>% 
+  ggplot(aes(x = date, y = tmax, color = name)) +
+  geom_point(aes(size = prcp), alpha = .3) + 
+  geom_smooth(se = FALSE) +
+  facet_grid(. ~ name)
+
+weather_scatterplot
+
+ggsave(
+  file = "results/weather_scatterplot.pdf", 
+  plot = weather_scatterplot,
+  width = 8, height = 5)
+```
+
+```{r, fig.width = 8}
+weather_scatterplot
+# can tweak how plot is outputted in the markdown file in the code chunk
+```
 
 
